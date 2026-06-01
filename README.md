@@ -129,8 +129,6 @@ Guides: see [`docs/`](docs/).
 | Project | Role |
 |---------|------|
 | [floatpane/matcha](https://github.com/floatpane/matcha) | Reference consumer — inbox, email, composer, folder keybinds. |
-| [floatpane/go-icalendar](https://github.com/floatpane/go-icalendar) | Sibling extraction — iCalendar parsing and iMIP replies. |
-| [floatpane/go-secretbox](https://github.com/floatpane/go-secretbox) | Sibling extraction — password-based encryption at rest. |
 
 ## Contributing
 
