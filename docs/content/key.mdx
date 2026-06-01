@@ -1,0 +1,90 @@
+---
+title: Key Parsing
+---
+
+# Key Parsing
+
+## Parse
+
+```go
+k, err := keybind.Parse("ctrl+shift+a")
+// k.Ctrl  = true
+// k.Shift = true
+// k.Base  = "a"
+// k.String() = "ctrl+shift+a"
+```
+
+`Parse` validates and normalizes a key string. It returns `ErrEmptyKey` for an
+empty input and `ErrUnknownKey` for an unrecognized base or modifier.
+
+## MustParse
+
+```go
+// Panics on error — for package-level vars and test helpers.
+var quitKey = keybind.MustParse("ctrl+c")
+```
+
+## The Key type
+
+```go
+type Key struct {
+    Ctrl  bool
+    Alt   bool
+    Shift bool
+    Base  string // canonical base key name
+}
+```
+
+`Key` is comparable; two Keys are `==` when they represent the same shortcut
+regardless of how the original strings were written:
+
+```go
+a, _ := keybind.Parse("esc")
+b, _ := keybind.Parse("escape")
+fmt.Println(a == b) // true
+```
+
+## Modifier order
+
+Input order does not matter. `String()` always emits `ctrl`, `alt`, `shift`
+in that order:
+
+```go
+k1, _ := keybind.Parse("shift+ctrl+a")
+k2, _ := keybind.Parse("ctrl+shift+a")
+fmt.Println(k1 == k2)       // true
+fmt.Println(k1.String())    // "ctrl+shift+a"
+```
+
+## Supported modifiers
+
+| Name in input | Normalized to |
+|---------------|---------------|
+| `ctrl` | `Ctrl = true` |
+| `alt`, `meta`, `opt` | `Alt = true` |
+| `shift` | `Shift = true` |
+
+## Supported special keys
+
+| Canonical name | Accepted aliases |
+|----------------|-----------------|
+| `enter` | `return` |
+| `esc` | `escape` |
+| `tab` | — |
+| `backspace` | `bs` |
+| `space` | — |
+| `up`, `down`, `left`, `right` | — |
+| `delete` | `del` |
+| `insert` | — |
+| `home`, `end` | — |
+| `pgup` | `pageup` |
+| `pgdown` | `pagedown`, `pgdn` |
+| `f1` … `f12` | — |
+
+Any single printable character is also accepted as-is (`a`, `A`, `1`, `/`, `[`, `]`…).
+The original case is preserved so that uppercase letters (sent by some frameworks
+without a `Shift` modifier) remain distinct from lowercase.
+
+> [!NOTE]
+> The `+` character is not supported as a base key — it conflicts with the
+> modifier separator. Use `shift+=` for the plus key on most layouts.

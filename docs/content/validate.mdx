@@ -1,0 +1,61 @@
+---
+title: Conflict Validation
+---
+
+# Conflict Validation
+
+```go
+func Validate(areas map[string]map[string]string) []string
+```
+
+Checks for **intra-area conflicts**: two different actions within the same area
+mapped to the same (non-empty) key. Cross-area duplicates are intentional and
+not reported — binding `"d"` to delete in both an inbox view and an email view
+is normal; the active view determines which handler fires.
+
+Each returned string is a human-readable conflict description:
+
+```
+conflict in inbox: key "d" used for both "delete" and "archive"
+```
+
+## Usage
+
+Build the map from your config struct:
+
+```go
+conflicts := keybind.Validate(map[string]map[string]string{
+    "global": {
+        "quit":     cfg.Global.Quit,
+        "cancel":   cfg.Global.Cancel,
+        "nav_up":   cfg.Global.NavUp,
+        "nav_down": cfg.Global.NavDown,
+    },
+    "inbox": {
+        "delete":  cfg.Inbox.Delete,
+        "archive": cfg.Inbox.Archive,
+        "open":    cfg.Inbox.Open,
+    },
+})
+if len(conflicts) > 0 {
+    // Surface to the user in a settings panel, or log on startup.
+    for _, c := range conflicts {
+        log.Printf("keybind conflict: %s", c)
+    }
+}
+```
+
+## What is and isn't a conflict
+
+| Scenario | Reported? |
+|----------|-----------|
+| `inbox.delete` and `inbox.archive` both bound to `"d"` | Yes |
+| `inbox.delete` and `email.delete` both bound to `"d"` | No — cross-area |
+| An empty string `""` | No — unbound action |
+| Same action bound to the same key (no-op) | No — identical mapping |
+
+> [!NOTE]
+> Some intentional "conflicts" within an area are safe because one handler
+> intercepts before the other fires — for example, a spellcheck popup that
+> captures `"tab"` before the normal next-field handler. These can be excluded
+> from the map passed to `Validate` rather than suppressed after the fact.

@@ -1,0 +1,75 @@
+---
+title: Getting Started
+---
+
+# Getting Started
+
+## Install
+
+```bash
+go get github.com/floatpane/go-keybind
+```
+
+Requires Go 1.26+. No external dependencies.
+
+## Define your config struct
+
+```go
+type MyKeys struct {
+    Quit    string `json:"quit"`
+    Reload  string `json:"reload"`
+    NavUp   string `json:"nav_up"`
+    NavDown string `json:"nav_down"`
+}
+```
+
+## Load from disk
+
+```go
+cfg, err := keybind.Load(cfgDir, "keybinds.json", MyKeys{
+    Quit:    "ctrl+c",
+    Reload:  "r",
+    NavUp:   "k",
+    NavDown: "j",
+})
+if err != nil {
+    log.Fatal(err)
+}
+// If keybinds.json didn't exist it was created with the defaults above.
+```
+
+## Validate for conflicts
+
+```go
+conflicts := keybind.Validate(map[string]map[string]string{
+    "global": {
+        "quit":     cfg.Quit,
+        "reload":   cfg.Reload,
+        "nav_up":   cfg.NavUp,
+        "nav_down": cfg.NavDown,
+    },
+})
+for _, c := range conflicts {
+    log.Printf("keybind conflict: %s", c)
+}
+```
+
+## Parse and match key events
+
+```go
+quitKey, err := keybind.Parse(cfg.Quit)
+if err != nil {
+    log.Fatalf("bad quit key %q: %v", cfg.Quit, err)
+}
+
+// In your TUI event loop, compare the incoming key event string:
+if incomingEvent == quitKey.String() {
+    // handle quit
+}
+```
+
+## Where next
+
+- [Key Parsing](/key) — the `Key` type, aliases, modifier order.
+- [Config: Load & Save](/config) — merge semantics, write-if-missing, `Save`.
+- [Conflict Validation](/validate) — `Validate` in detail.

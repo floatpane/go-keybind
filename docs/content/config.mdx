@@ -1,0 +1,62 @@
+---
+title: Config — Load & Save
+---
+
+# Config: Load & Save
+
+## Load
+
+```go
+func Load[T any](cfgDir, filename string, defaults T) (T, error)
+```
+
+Reads `cfgDir/filename` as JSON into a copy of `defaults`, so any key absent
+from the file keeps its compiled-in default value. If the file doesn't exist,
+`defaults` are written to disk (as indented JSON) and returned.
+
+```go
+cfg, err := keybind.Load(cfgDir, "keybinds.json", MyKeys{
+    Quit:   "ctrl+c",
+    Reload: "r",
+})
+```
+
+### Merge semantics
+
+If the user's file contains only some fields, the rest come from `defaults`:
+
+```json
+{ "quit": "ctrl+q" }
+```
+
+```go
+// cfg.Quit   = "ctrl+q"  (from file)
+// cfg.Reload = "r"       (from defaults — field not in file)
+```
+
+This means you can add new bindings in a later release without breaking
+existing user configs.
+
+## Save
+
+```go
+func Save[T any](cfgDir, filename string, cfg T) error
+```
+
+Writes `cfg` as indented JSON to `cfgDir/filename`, creating `cfgDir` if
+needed. Useful for a "reset to defaults" or "save changes" action in a settings
+panel.
+
+```go
+if err := keybind.Save(cfgDir, "keybinds.json", cfg); err != nil {
+    log.Fatal(err)
+}
+```
+
+## File permissions
+
+- Directories are created with mode `0700`.
+- Files are written with mode `0600`.
+
+These match XDG expectations for user config files that may contain sensitive
+preferences.
